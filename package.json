@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Interactive sector cartography and faction simulation for tabletop campaigns",
   "scripts": {
-    "test": "node --test tests/simulation.test.mjs"
+    "test": "node --test tests/*.test.mjs"
   },
   "engines": {
     "node": ">=24"

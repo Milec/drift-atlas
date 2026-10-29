@@ -1,3 +1,4 @@
+import {importGeneratorFactions} from './faction-import.js';
 import {composeSimulation,extractSimulation} from './sim-storage.js';
 import {buildLanes} from './navigation.js';
 const hash=s=>{let h=2166136261;for(const c of s)h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0;};
@@ -11,7 +12,7 @@ export function validateSector(d){
  if(count>3000)throw Error('The atlas supports up to 3,000 map entities.');
 }
 export function prepareSector(d){
- validateSector(d);const out=structuredClone(d),edits=out._driftAtlas?.systems||{},ns=[];
+ validateSector(d);const out=importGeneratorFactions(structuredClone(d)),edits=out._driftAtlas?.systems||{},ns=[];
  for(const type of ['system','blackHole'])for(const [id,n]of Object.entries(out[type]||{})){
   n.x=Number(n.x);n.y=Number(n.y);n.z=Number.isFinite(edits[id]?.z)?edits[id].z:Number.isFinite(n.z)?n.z:Math.round(((hash(id)%1000)/999*2-1)*240)/100;
   edits[id]={...edits[id],z:n.z};

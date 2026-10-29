@@ -1,3 +1,4 @@
+import {importGeneratorFactions,locationOwners} from './faction-import.js';
 import {validateSimulationState} from './simulation.js';
 import {mountSimulation} from './simulation-ui.js';
 import {mountFactions,factionCatalog} from './factions.js';
@@ -100,6 +101,7 @@ function load(d,restored=false){
  if(!d||typeof d!=='object'||Array.isArray(d)||!d.system||typeof d.system!=='object'||Array.isArray(d.system)||!Object.keys(d.system).length)throw Error('Choose a SWN JSON export with a non-empty system collection.');
  const temp=[];for(const type of ['system','blackHole'])for(const [id,n] of Object.entries(d[type]||{})){if(!n||!Number.isFinite(Number(n.x))||!Number.isFinite(Number(n.y)))throw Error('Each map entity must contain numeric X and Y coordinates.');temp.push({id,...n,type});}
  if(temp.length>3000)throw Error('This atlas supports up to 3,000 map entities.');
+ importGeneratorFactions(d);
  if(routeOpen)closeRoute();if(systemMode)leaveSystem();localRoute=false;routeMemory.clear();
  data=d;originKey='drift-atlas:edits:'+sectorId(d);try{const prior=localStorage.getItem(originKey),legacy=!restored&&prior===null?localStorage.getItem('drift-atlas:'+hash(Object.keys(d.system).sort().join('|'))):null;saved=JSON.parse(prior||legacy||'{}')||{};if(legacy)localStorage.setItem(originKey,legacy);}catch{saved={};}
  saved={...(d._driftAtlas?.systems||{}),...saved};
@@ -293,7 +295,7 @@ function drawSystem(){const labelBoxes=[];function placeLabel(p,r,n){const text=
   if(p.hidden)continue;const n=p.n,r=p.r,extent=p.bodyExtent,sel=bodySelected?.id===n.id,color=localColor(n),black=n.localStar&&n.type==='blackHole';
   if(n.localStar){const g=ctx.createRadialGradient(p.x,p.y,r*.4,p.x,p.y,r*5);g.addColorStop(0,color+'80');g.addColorStop(.35,color+'20');g.addColorStop(1,color+'00');ctx.fillStyle=g;ctx.fillRect(p.x-r*5,p.y-r*5,r*10,r*10);}
   depthRenderer.draw(ctx,p);
-  if(document.querySelector('[data-faction-toggle]').checked){const owner=factionCatalog(data)[saved[n.id]?.factionId];if(owner){ctx.strokeStyle=owner.color;ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,extent+3,0,Math.PI*2);ctx.stroke();}}
+  if(document.querySelector('[data-faction-toggle]').checked){const catalog=factionCatalog(data),owners=locationOwners(saved[n.id],catalog);for(let i=0;i<owners.length;i++){ctx.strokeStyle=catalog[owners[i]].color;ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,extent+3,i*Math.PI*2/owners.length,(i+1)*Math.PI*2/owners.length);ctx.stroke();}}
   if(sel||gateRole(n)){ctx.strokeStyle='#e3c38c';ctx.lineWidth=1;ctx.setLineDash([3,4]);ctx.beginPath();ctx.arc(p.x,p.y,extent+7,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
   if($('#labels').checked||sel||n.localStar){ctx.fillStyle=sel?'#f4deb5':'#b1c4cd';ctx.font=(n.localStar?'500 14px':'10px')+' "DM Sans",sans-serif';ctx.shadowColor='#080e17';ctx.shadowBlur=6;const label=placeLabel(p,extent,n);if(Math.abs(label.y-p.y)>18)line(p,{x:label.x-4,y:label.y+10},'#7b9da34a',.6);ctx.fillText(n.name,label.x,label.y+12);ctx.font='7px "IBM Plex Mono",monospace';ctx.fillStyle=color;ctx.fillText(n.localStar?(black?'BLACK HOLE':'CLASS '+spectral.key+' STAR'):n.type==='driftGate'?'DRIFT GATE · '+(gateRole(n)||'IN / OUT'):typeName(n.type).toUpperCase(),label.x,label.y+25);ctx.shadowBlur=0;}
  }
